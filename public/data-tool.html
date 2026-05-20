@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OKINI - DATA SYNC</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        background-color: #121212;
+        color: white;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      #bg-aura {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        background-position: center;
+        background-size: cover;
+        background-color: #1db954;
+        filter: blur(90px) brightness(0.2);
+        transform: scale(1.2);
+        transition:
+          background-image 1.5s ease-in-out,
+          background-color 1.5s ease;
+        pointer-events: none;
+      }
+      h1 {
+        font-size: 24px;
+        margin-top: 10px;
+        margin-bottom: 5px;
+        text-align: center;
+        letter-spacing: 4px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      }
+      .subtitle {
+        font-size: 11px;
+        color: #1db954;
+        letter-spacing: 2px;
+        margin-bottom: 25px;
+        text-shadow: 0 2px 5px rgba(29, 185, 84, 0.4);
+        font-weight: bold;
+      }
+      #main-card {
+        background: #282828;
+        padding: 30px 20px;
+        border-radius: 15px;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+      }
+      .hidden-panel {
+        display: none !important;
+      }
+
+      .login-desc {
+        color: #b3b3b3;
+        font-size: 13px;
+        text-align: center;
+        margin-bottom: 15px;
+        line-height: 1.6;
+      }
+      .terms-notice {
+        color: #888;
+        font-size: 11px;
+        text-align: center;
+        margin-bottom: 20px;
+        line-height: 1.5;
+      }
+      .terms-notice a {
+        color: #1db954;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      .text-success {
+        color: #1db954 !important;
+      }
+      .text-muted {
+        color: #b3b3b3 !important;
+      }
+      .user-card {
+        background: #333;
+        padding: 15px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        text-align: left;
+        box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
+      }
+      .user-avatar {
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        background: #222;
+        object-fit: cover;
+        border: 2px solid #1db954;
+      }
+      .user-meta {
+        flex-grow: 1;
+        overflow: hidden;
+      }
+      .user-meta h3 {
+        margin: 0 0 4px 0;
+        font-size: 18px;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .user-meta p {
+        margin: 0;
+        font-size: 11px;
+        color: #a0a0a0;
+        font-family: monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #e0e0e0;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .input-note {
+        font-size: 11px;
+        color: #888;
+        margin-top: 6px;
+        line-height: 1.4;
+        transition: color 0.3s;
+      }
+      input[type="text"],
+      select {
+        width: 100%;
+        padding: 14px;
+        font-size: 15px;
+        background: #1f1f1f;
+        color: #fff;
+        border: 1px solid #444;
+        border-radius: 10px;
+        box-sizing: border-box;
+        transition: 0.2s;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      input[type="text"]:focus,
+      select:focus {
+        border-color: #1db954;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.2);
+      }
+      select {
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 1em;
+      }
+      button.action-btn {
+        background-color: #1db954;
+        color: white;
+        border: none;
+        width: 100%;
+        padding: 16px;
+        font-size: 15px;
+        font-weight: bold;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: 0.3s;
+        box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
+      }
+      button.action-btn:hover:not(:disabled) {
+        background-color: #1ed760;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(29, 185, 84, 0.4);
+      }
+      button.action-btn:disabled {
+        background-color: #333;
+        color: #666;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+      }
+      .btn-outline {
+        background-color: transparent !important;
+        color: #b3b3b3 !important;
+        border: 1px solid #555 !important;
+        margin-top: 10px;
+        box-shadow: none !important;
+      }
+      .btn-outline:hover:not(:disabled) {
+        background-color: #333 !important;
+        color: #fff !important;
+        border-color: #888 !important;
+      }
+      .btn-danger {
+        background-color: transparent !important;
+        color: #ff5555 !important;
+        border: 1px solid #ff5555 !important;
+        margin-top: 25px;
+      }
+      .btn-danger:hover:not(:disabled) {
+        background-color: #ff5555 !important;
+        color: #fff !important;
+      }
+      .url-box {
+        margin-top: 25px;
+        padding: 20px;
+        background: #181818;
+        border: 2px dashed #1db954;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      }
+      .url-desc {
+        margin: 0 0 10px 0;
+        font-size: 13px;
+        color: #e0e0e0;
+        font-weight: bold;
+      }
+      .url-link {
+        color: #1db954;
+        font-size: 15px;
+        font-weight: bold;
+        text-decoration: none;
+        word-break: break-all;
+        display: block;
+        margin-bottom: 15px;
+        padding: 10px;
+        background: #222;
+        border-radius: 8px;
+      }
+      .copy-btn {
+        background-color: #fff !important;
+        color: #121212 !important;
+        box-shadow: none !important;
+        padding: 12px !important;
+        font-size: 14px !important;
+      }
+      .copy-btn:hover {
+        background-color: #e6e6e6 !important;
+      }
+      #status-area {
+        margin-top: 20px;
+        padding: 15px;
+        background: #121212;
+        border-radius: 10px;
+        min-height: 80px;
+        max-height: 150px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+        color: #b3b3b3;
+        line-height: 1.5;
+        border: 1px solid #333;
+        word-break: break-word;
+      }
+      .log-error {
+        color: #ff5555;
+      }
+      .log-success {
+        color: #1db954;
+        font-weight: bold;
+      }
+      .log-info {
+        color: #4facfe;
+      }
+
+      .footer-links {
+        margin-top: 25px;
+        display: flex;
+        gap: 20px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      }
+      .footer-links a {
+        color: #888;
+        font-size: 12px;
+        text-decoration: underline;
+        cursor: pointer;
+        transition: color 0.2s;
+      }
+      .footer-links a:hover {
+        color: #1db954;
+      }
+
+      .powered-by {
+        margin-top: 15px;
+        margin-bottom: 20px;
+        color: #888;
+        font-size: 11px;
+        letter-spacing: 1px;
+        text-align: center;
+      }
+
+      /* モーダル用CSS */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        z-index: 1000;
+        -webkit-backdrop-filter: blur(5px);
+        backdrop-filter: blur(5px);
+      }
+      .modal-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .modal-content {
+        background: #282828;
+        padding: 30px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 380px;
+        text-align: left;
+        position: relative;
+        transform: translateY(20px) scale(0.95);
+        transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+      }
+      .modal-overlay.active .modal-content {
+        transform: translateY(0) scale(1);
+      }
+      .modal-content h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: #1db954;
+        font-size: 20px;
+        border-bottom: 1px solid #444;
+        padding-bottom: 10px;
+      }
+      .modal-content p {
+        color: #e0e0e0;
+        line-height: 1.6;
+        font-size: 14px;
+        margin-bottom: 15px;
+      }
+      .modal-content p:last-child {
+        margin-bottom: 0;
+      }
+      .close-btn {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 28px;
+        color: #888;
+        cursor: pointer;
+        transition: color 0.2s;
+        line-height: 1;
+      }
+      .close-btn:hover {
+        color: white;
+      }
+
+      @media (max-width: 500px) {
+        body {
+          padding: 15px 20px;
+        }
+        #main-card {
+          padding: 25px 15px;
+        }
+        h1 {
+          font-size: 22px;
+        }
+        .user-card {
+          padding: 12px;
+          gap: 10px;
+        }
+        .user-avatar {
+          width: 45px;
+          height: 45px;
+        }
+        button.action-btn {
+          font-size: 14px;
+          padding: 14px;
+        }
+        input[type="text"],
+        select {
+          padding: 12px;
+          font-size: 14px;
+        }
+        .url-link {
+          font-size: 13px;
+        }
+      }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  </head>
+  <body>
+    <div id="bg-aura"></div>
+    <h1>O K I N I</h1>
+    <div class="subtitle">DATA SYNC TOOL</div>
+    <div id="main-card">
+      <div id="login-panel">
+        <p class="login-desc">
+          Spotifyと連携して、<br />あなたのお気に入り曲を安全に同期します。
+        </p>
+        <p class="terms-notice">
+          連携を開始することで、<a onclick="openModal('terms-modal')"
+            >利用規約</a
+          >および<a onclick="openModal('privacy-modal')">プライバシーポリシー</a
+          >に同意したものとみなします。
+        </p>
+        <button id="login-btn" class="action-btn" onclick="login()">
+          Spotifyで連携スタート
+        </button>
+      </div>
+      <div id="operation-panel" class="hidden-panel">
+        <div class="user-card">
+          <img
+            id="user-avatar"
+            class="user-avatar"
+            src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+            alt="Avatar"
+          />
+          <div class="user-meta">
+            <h3 id="user-display-name">Loading...</h3>
+            <p id="user-spotify-id">ID: ---</p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="user-id">OKINI ID (URLに使用する名前)</label>
+          <input
+            type="text"
+            id="user-id"
+            placeholder="例: kame (アルファベット4〜8文字)"
+            value=""
+          />
+          <div class="input-note" id="id-status-note">
+            シェアURLを発行するためのIDです。
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="display-name">表示名 (タイトル横に表示)</label>
+          <input
+            type="text"
+            id="display-name"
+            placeholder="例: かめ (ひらがな2〜5文字)"
+            value=""
+          />
+          <div class="input-note">
+            ルーレット画面のタイトルの横に白文字で小さく表示されます。
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="fetch-limit">同期するお気に入り曲（最新順）</label>
+          <select id="fetch-limit">
+            <option value="10">最新の10曲</option>
+            <option value="50">最新の50曲</option>
+            <option value="100">最新の100曲</option>
+            <option value="all" selected>すべて（全曲ループ取得！）</option>
+          </select>
+        </div>
+        <button id="add-btn" class="action-btn" onclick="addTracksToOkini()">
+          同期を開始する
+        </button>
+        <button class="action-btn btn-outline" onclick="logout()">
+          ログアウト
+        </button>
+        <button class="action-btn btn-danger" onclick="deleteUserData()">
+          連携解除とデータ一括削除
+        </button>
+      </div>
+      <div id="result-url-area" class="hidden-panel url-box">
+        <p class="url-desc">🎉 あなたのOKINI URLが完成しました！</p>
+        <a id="share-url" class="url-link" href="#" target="_blank"></a>
+        <button class="action-btn copy-btn" onclick="copyUrl()">
+          URLをコピーする
+        </button>
+      </div>
+      <div id="status-area">待機中...</div>
+    </div>
+
+    <div class="footer-links">
+      <a onclick="openModal('terms-modal')">利用規約</a>
+      <a onclick="openModal('privacy-modal')">プライバシーポリシー</a>
+    </div>
+    <div class="powered-by">Powered by Spotify</div>
+
+    <div
+      id="terms-modal"
+      class="modal-overlay"
+      onclick="closeModal('terms-modal')"
+    >
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-btn" onclick="closeModal('terms-modal')">×</span>
+        <h3>利用規約</h3>
+        <p>
+          当アプリは個人開発の非公式ツールであり、Spotifyの公式サービスではありません。
+        </p>
+        <p>
+          本サービスの利用により生じた損害について、開発者およびSpotifyは一切の責任を負いかねますのでご了承ください。
+        </p>
+        <p>
+          提供されるデータや機能は、予告なく変更または停止される場合があります。
+        </p>
+      </div>
+    </div>
+
+    <div
+      id="privacy-modal"
+      class="modal-overlay"
+      onclick="closeModal('privacy-modal')"
+    >
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-btn" onclick="closeModal('privacy-modal')">×</span>
+        <h3>プライバシーポリシー</h3>
+        <p>
+          当アプリは、連携したSpotifyアカウントの公開プロファイル情報および「お気に入り楽曲」の情報を、本アプリの機能提供の目的にのみ使用・保存します。
+        </p>
+        <p>取得したデータを第三者へ販売、提供することは決してありません。</p>
+        <p>
+          データツールより「連携解除とデータ削除」を行うことで、保存された情報は全てデータベースから即座に、かつ完全に削除されます。
+        </p>
+      </div>
+    </div>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyC43P4omQQCMfGkz0AnbdcD1QZQv3oVaqI",
+        authDomain: "okini-90ed1.firebaseapp.com",
+        projectId: "okini-90ed1",
+        storageBucket: "okini-90ed1.firebasestorage.app",
+        messagingSenderId: "101667008850",
+        appId: "1:101667008850:web:9729014f432d132bd4ca8b",
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      const clientId = "e3cc6e65637847cdbe5ee1244e831b16";
+      const redirectUri = window.location.origin + window.location.pathname;
+      let currentSpotifyId = "";
+      let currentDisplayName = "";
+      const statusArea = document.getElementById("status-area");
+
+      function log(msg, type = "") {
+        const span = document.createElement("span");
+        span.innerText = `> ${msg}\n`;
+        if (type) span.className = `log-${type}`;
+        statusArea.appendChild(span);
+        statusArea.scrollTop = statusArea.scrollHeight;
+      }
+      function clearLog() {
+        statusArea.innerHTML = "";
+      }
+
+      window.onload = async () => {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get("code");
+        if (code) {
+          window.history.pushState(
+            {},
+            document.title,
+            window.location.pathname,
+          );
+          clearLog();
+          log("Spotifyの認証コードを確認中...", "info");
+          const accessToken = await getAccessToken(clientId, code);
+          if (accessToken) {
+            localStorage.setItem("spotify_access_token", accessToken);
+            await initializeUserSystem(accessToken);
+          } else {
+            log("アクセストークンの取得に失敗しました。", "error");
+          }
+        } else if (localStorage.getItem("spotify_access_token")) {
+          clearLog();
+          await initializeUserSystem(
+            localStorage.getItem("spotify_access_token"),
+          );
+        }
+      };
+
+      async function initializeUserSystem(token) {
+        log("プロフィールの取得中...", "info");
+        try {
+          const res = await fetch("https://api.spotify.com/v1/me", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.status === 401) {
+            handleTokenExpired();
+            return;
+          }
+          const spotifyUser = await res.json();
+          currentSpotifyId = spotifyUser.id;
+          currentDisplayName = spotifyUser.display_name || spotifyUser.id;
+          document.getElementById("user-display-name").innerText =
+            currentDisplayName;
+          document.getElementById("user-spotify-id").innerText =
+            `ID: ${currentSpotifyId}`;
+          if (spotifyUser.images && spotifyUser.images.length > 0) {
+            const avatarUrl = spotifyUser.images[0].url;
+            document.getElementById("user-avatar").src = avatarUrl;
+            document.getElementById("bg-aura").style.backgroundImage =
+              `url('${avatarUrl}')`;
+          }
+
+          log("Firestoreからマッピングを確認中...", "info");
+          const userDoc = await db
+            .collection("users")
+            .doc(currentSpotifyId)
+            .get();
+          const userIdInput = document.getElementById("user-id");
+          const displayNameInput = document.getElementById("display-name");
+          const idNote = document.getElementById("id-status-note");
+
+          if (userDoc.exists) {
+            const mappingData = userDoc.data();
+            userIdInput.value = mappingData.okiniId || "";
+            displayNameInput.value = mappingData.displayName || "";
+            idNote.innerText = "登録済みの情報をロードしました。";
+            idNote.className = "input-note text-success";
+          } else {
+            userIdInput.value = "";
+            displayNameInput.value = "";
+            idNote.innerText =
+              "初回の同期です。希望のIDと表示名を決めてください。";
+            idNote.className = "input-note text-muted";
+          }
+          showLoggedInUI();
+          log(`連携完了: ${currentDisplayName} さん`, "success");
+        } catch (error) {
+          console.error(error);
+          log("ユーザー情報の取得に失敗しました。", "error");
+        }
+      }
+
+      function showLoggedInUI() {
+        document.getElementById("login-panel").classList.add("hidden-panel");
+        document
+          .getElementById("operation-panel")
+          .classList.remove("hidden-panel");
+      }
+      async function login() {
+        const verifier = generateCodeVerifier(128);
+        const challenge = await generateCodeChallenge(verifier);
+        localStorage.setItem("code_verifier", verifier);
+        const params = new URLSearchParams({
+          client_id: clientId,
+          response_type: "code",
+          redirect_uri: redirectUri,
+          scope: "user-library-read user-read-private",
+          code_challenge_method: "S256",
+          code_challenge: challenge,
+        });
+        document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
+      }
+      function generateCodeVerifier(length) {
+        let text = "";
+        let possible =
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+        for (let i = 0; i < length; i++)
+          text += possible.charAt(Math.floor(Math.random() * possible.length));
+        return text;
+      }
+      async function generateCodeChallenge(codeVerifier) {
+        const data = new TextEncoder().encode(codeVerifier);
+        const digest = await window.crypto.subtle.digest("SHA-256", data);
+        return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
+      }
+      async function getAccessToken(clientId, code) {
+        const params = new URLSearchParams({
+          client_id: clientId,
+          grant_type: "authorization_code",
+          code: code,
+          redirect_uri: redirectUri,
+          code_verifier: localStorage.getItem("code_verifier"),
+        });
+        const res = await fetch("https://accounts.spotify.com/api/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params,
+        });
+        const json = res.ok ? await res.json() : null;
+        return json ? json.access_token : null;
+      }
+
+      async function addTracksToOkini() {
+        const token = localStorage.getItem("spotify_access_token");
+        const okiniId = document.getElementById("user-id").value.trim();
+        const customDisplayName = document
+          .getElementById("display-name")
+          .value.trim();
+        const limitSelection = document.getElementById("fetch-limit").value;
+        const addBtn = document.getElementById("add-btn");
+        const resultArea = document.getElementById("result-url-area");
+
+        if (!token || !currentSpotifyId) {
+          alert("Spotifyと再連携してください。");
+          return;
+        }
+        if (!/^[a-zA-Z]{4,8}$/.test(okiniId)) {
+          alert(
+            "【エラー】OKINI IDは、4〜8文字の「アルファベットのみ」で入力してください。",
+          );
+          return;
+        }
+        if (!/^[ぁ-んー]{2,5}$/.test(customDisplayName)) {
+          alert(
+            "【エラー】表示名は、2〜5文字の「ひらがなのみ」で入力してください。",
+          );
+          return;
+        }
+
+        addBtn.disabled = true;
+        addBtn.innerText = "同期処理を実行中...";
+        resultArea.classList.add("hidden-panel");
+        clearLog();
+
+        try {
+          log("[1/4] Spotifyから曲リストを取得中...", "info");
+          let allTracks = [];
+          let fetchLimit =
+            limitSelection === "all" ? 50 : parseInt(limitSelection);
+          let nextUrl = `https://api.spotify.com/v1/me/tracks?limit=${fetchLimit}`;
+          while (nextUrl) {
+            const response = await fetch(nextUrl, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (response.status === 401) {
+              handleTokenExpired();
+              return;
+            }
+            const data = await response.json();
+            allTracks = allTracks.concat(data.items);
+            log(`...現在 ${allTracks.length} 曲取得`);
+            if (limitSelection !== "all") break;
+            nextUrl = data.next;
+          }
+
+          log(`[2/4] データを軽量化して小箱（チャンク）に分割中...`, "info");
+          const formattedTracks = allTracks.map((item) => ({
+            id: item.track.id,
+            title: item.track.name,
+            artist: item.track.artists.map((a) => a.name).join(", "),
+            image:
+              item.track.album.images.length > 0
+                ? item.track.album.images[0].url
+                : "",
+            spotifyUrl: item.track.external_urls.spotify,
+            addedAt: item.added_at,
+            popularity: item.track.popularity,
+            explicit: item.track.explicit,
+          }));
+          const CHUNK_SIZE = 500;
+          const chunks = [];
+          for (let i = 0; i < formattedTracks.length; i += CHUNK_SIZE) {
+            chunks.push(formattedTracks.slice(i, i + CHUNK_SIZE));
+          }
+
+          log(
+            `[3/4] Firestoreへチャンクデータ（全${chunks.length}箱）を保存中...`,
+            "info",
+          );
+          let errorCount = 0;
+          for (let i = 0; i < chunks.length; i++) {
+            try {
+              await db
+                .collection("users")
+                .doc(currentSpotifyId)
+                .collection("chunks")
+                .doc(`chunk_${i}`)
+                .set({ tracks: chunks[i] });
+              log(`...箱 ${i + 1}/${chunks.length} を保存完了`);
+            } catch (e) {
+              errorCount++;
+              console.error(e);
+            }
+          }
+
+          log(`[4/4] ユーザープロフィールの更新...`, "info");
+          await db.collection("users").doc(currentSpotifyId).set(
+            {
+              okiniId: okiniId,
+              displayName: customDisplayName,
+              chunkCount: chunks.length,
+              totalTracks: formattedTracks.length,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true },
+          );
+          log(`🎉 同期が完全に終了しました！`, "success");
+          if (errorCount > 0)
+            log(`⚠ ${errorCount}個の箱の保存に失敗しました。`, "error");
+
+          const shareUrl = `${window.location.origin}/?user=${okiniId}`;
+          const shareLink = document.getElementById("share-url");
+          shareLink.href = shareUrl;
+          shareLink.innerText = shareUrl;
+          resultArea.classList.remove("hidden-panel");
+        } catch (error) {
+          console.error(error);
+          log("致命的なエラーが発生しました。", "error");
+        } finally {
+          addBtn.disabled = false;
+          addBtn.innerText = "同期を開始する";
+        }
+      }
+
+      // --- 追加：データの一括削除と連携解除 ---
+      async function deleteUserData() {
+        if (!currentSpotifyId) return;
+
+        const confirmDelete = confirm(
+          "【警告】保存されているあなたのお気に入り曲データとユーザー情報を完全に削除し、Spotifyとの連携を解除します。よろしいですか？",
+        );
+        if (!confirmDelete) return;
+
+        const addBtn = document.getElementById("add-btn");
+        const delBtn = document.querySelector(".btn-danger");
+        addBtn.disabled = true;
+        delBtn.disabled = true;
+        delBtn.innerText = "データを削除中...";
+        clearLog();
+        log("データベースからあなたの情報を削除しています...", "info");
+
+        try {
+          // 1. chunksサブコレクションの中身をすべて消す
+          const chunksSnapshot = await db
+            .collection("users")
+            .doc(currentSpotifyId)
+            .collection("chunks")
+            .get();
+          const deletePromises = [];
+          chunksSnapshot.forEach((doc) => {
+            deletePromises.push(doc.ref.delete());
+          });
+          await Promise.all(deletePromises);
+          log(
+            `... ${deletePromises.length}個の曲データチャンクを消去しました。`,
+          );
+
+          // 2. ユーザー自身のドキュメントを消す
+          await db.collection("users").doc(currentSpotifyId).delete();
+          log("... ユーザープロフィールの削除が完了しました。");
+
+          log("全てのデータの完全削除が完了しました！", "success");
+          alert(
+            "データの削除と連携解除が完了しました。ご利用ありがとうございました！",
+          );
+
+          logout();
+        } catch (error) {
+          console.error(error);
+          log("データの削除中にエラーが発生しました。", "error");
+          delBtn.disabled = false;
+          delBtn.innerText = "連携解除とデータ一括削除";
+        }
+      }
+
+      function copyUrl() {
+        const shareUrl = document.getElementById("share-url").href;
+        navigator.clipboard
+          .writeText(shareUrl)
+          .then(() => {
+            alert(
+              "URLをコピーしました！友達にシェアしてルーレットを回してもらおう！",
+            );
+          })
+          .catch((err) => {
+            alert(
+              "コピーに失敗しました。URLを直接選択してコピーしてください。",
+            );
+          });
+      }
+
+      function handleTokenExpired() {
+        alert("セッションの有効期限が切れました。再度ログインしてください。");
+        logout();
+      }
+
+      function logout() {
+        localStorage.clear();
+        window.location.href =
+          window.location.origin + window.location.pathname;
+      }
+
+      function openModal(modalId) {
+        document.getElementById(modalId).classList.add("active");
+      }
+      function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove("active");
+      }
+    </script>
+  </body>
+</html>

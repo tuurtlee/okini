@@ -1,0 +1,957 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OKINI</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        background-color: #121212;
+        color: white;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      #bg-aura {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        background-position: center;
+        background-size: cover;
+        filter: blur(80px) brightness(0.35);
+        transform: scale(1.2);
+        transition: background-image 2s ease-in-out;
+        pointer-events: none;
+      }
+      h1 {
+        font-size: 24px;
+        margin-top: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+        letter-spacing: 2px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: baseline;
+        gap: 6px;
+      }
+      #header-username {
+        font-size: 13px;
+        color: #ffffff;
+        font-weight: normal;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        opacity: 0.9;
+      }
+      #track-card {
+        background: #282828;
+        padding: 20px;
+        border-radius: 15px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        text-align: left;
+        position: relative;
+        transition:
+          box-shadow 1s ease,
+          border 1s ease;
+        border: 1px solid transparent;
+      }
+      #track-card.ur-card {
+        box-shadow:
+          0 0 40px rgba(255, 215, 0, 0.4),
+          0 20px 40px rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 215, 0, 0.5);
+      }
+      #album-img {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: 8px;
+        object-fit: cover;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        margin-bottom: 5px;
+        transform: scale(1);
+        background-color: #333;
+        transition:
+          transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+          filter 1.5s ease,
+          opacity 1.5s ease;
+      }
+      .spinning {
+        transform: scale(0.85) !important;
+        opacity: 0.7;
+        filter: blur(3px);
+      }
+      #indicator-space {
+        height: 26px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+      #audio-indicator {
+        opacity: 0;
+        visibility: hidden;
+        background: rgba(29, 185, 84, 0.2);
+        border: 1px solid #1db954;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: bold;
+        color: #1db954;
+        cursor: pointer;
+        user-select: none;
+        transition:
+          opacity 0.5s ease,
+          visibility 0.5s ease,
+          background-color 0.2s,
+          border-color 0.2s,
+          color 0.2s;
+      }
+      #audio-indicator.show-indicator {
+        opacity: 1;
+        visibility: visible;
+      }
+      .pulse-fade {
+        animation: pulseFade 2s infinite;
+      }
+      @keyframes pulseFade {
+        0% {
+          opacity: 0.4;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.4;
+        }
+      }
+
+      #track-info {
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1),
+          transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+        /* 高さを少し広げてボタンを2つ置けるように調整 */
+        height: 235px;
+        display: flex;
+        flex-direction: column;
+      }
+      #track-info.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .info-text-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .title-wrapper {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        margin: 0 0 8px 0;
+      }
+      .title-left {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        flex-grow: 1;
+      }
+      h2#track-title {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+        word-break: break-word;
+      }
+      .explicit-badge {
+        font-size: 10px;
+        border: 1px solid #b3b3b3;
+        color: #b3b3b3;
+        padding: 2px 4px;
+        border-radius: 3px;
+        display: none;
+        margin-top: 7px;
+        flex-shrink: 0;
+      }
+      p.artist {
+        color: #b3b3b3;
+        margin: 0 0 10px 0;
+        font-size: 15px;
+      }
+      p.artist a {
+        color: inherit;
+        text-decoration: none;
+        transition: color 0.2s;
+        border-bottom: 1px dotted #555;
+      }
+      p.artist a:hover {
+        color: #1db954;
+        border-bottom-color: #1db954;
+      }
+      p.meta {
+        color: #888;
+        font-size: 13px;
+        margin: 0 0 15px 0;
+        border-bottom: 1px solid #444;
+        padding-bottom: 12px;
+      }
+      .popularity-text {
+        color: #1db954;
+        font-weight: bold;
+        font-size: 15px;
+      }
+      .popularity-text.ur-text {
+        background: linear-gradient(
+          90deg,
+          #ff9a9e,
+          #fecfef,
+          #a1c4fd,
+          #84fab0,
+          #fdfbfb,
+          #fccb90
+        );
+        background-size: 200% auto;
+        color: transparent;
+        -webkit-background-clip: text;
+        background-clip: text;
+        animation: rainbowText 3s linear infinite;
+        font-size: 17px;
+        font-weight: 900;
+        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
+      }
+      @keyframes rainbowText {
+        to {
+          background-position: 200% center;
+        }
+      }
+
+      .links {
+        margin-top: auto;
+        margin-bottom: 12px;
+        text-align: center;
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      a.spotify-btn {
+        display: block;
+        background: #1db954;
+        color: white;
+        text-decoration: none;
+        padding: 12px;
+        border-radius: 25px;
+        font-size: 14px;
+        font-weight: bold;
+        transition: 0.2s;
+        text-align: center;
+      }
+      a.spotify-btn:hover {
+        background: #1ed760;
+      }
+
+      /* --- 追加：iTunesリンク用のスタイル --- */
+      #apple-link-container {
+        display: none; /* 初期状態は非表示 */
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      #apple-link-container.show {
+        display: block;
+        opacity: 1;
+      }
+      a.apple-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        color: #e0e0e0;
+        text-decoration: none;
+        padding: 8px;
+        border-radius: 25px;
+        border: 1px solid #555;
+        font-size: 13px;
+        font-weight: bold;
+        transition: 0.2s;
+      }
+      a.apple-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #888;
+        color: white;
+      }
+      .apple-courtesy {
+        font-size: 9px;
+        font-weight: normal;
+        color: #888;
+        margin-top: 2px;
+      }
+      /* ---------------------------------- */
+
+      button.action-btn {
+        background-color: #333;
+        color: white;
+        border: 1px solid #555;
+        width: 100%;
+        padding: 15px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: 0.3s;
+        margin-top: 15px;
+        position: relative;
+        z-index: 5;
+      }
+      button.action-btn:hover:not(:disabled) {
+        background-color: #444;
+        border-color: #888;
+      }
+      button.action-btn:disabled {
+        background-color: #222;
+        color: #888;
+        cursor: not-allowed;
+        border-color: #333;
+      }
+
+      .footer-links {
+        margin-top: auto;
+        padding-top: 40px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      }
+      .footer-links a {
+        color: #888;
+        font-size: 12px;
+        text-decoration: underline;
+        cursor: pointer;
+        transition: color 0.2s;
+      }
+      .footer-links a:hover {
+        color: #1db954;
+      }
+      .powered-by {
+        margin-top: 15px;
+        margin-bottom: 20px;
+        color: #888;
+        font-size: 11px;
+        letter-spacing: 1px;
+        text-align: center;
+      }
+
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        z-index: 1000;
+        -webkit-backdrop-filter: blur(5px);
+        backdrop-filter: blur(5px);
+      }
+      .modal-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .modal-content {
+        background: #282828;
+        padding: 30px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 380px;
+        text-align: left;
+        position: relative;
+        transform: translateY(20px) scale(0.95);
+        transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+      }
+      .modal-overlay.active .modal-content {
+        transform: translateY(0) scale(1);
+      }
+      .modal-content h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: #1db954;
+        font-size: 20px;
+        border-bottom: 1px solid #444;
+        padding-bottom: 10px;
+      }
+      .modal-content p {
+        color: #e0e0e0;
+        line-height: 1.6;
+        font-size: 14px;
+        margin-bottom: 15px;
+      }
+      .modal-content p:last-child {
+        margin-bottom: 0;
+      }
+      .close-btn {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 28px;
+        color: #888;
+        cursor: pointer;
+        transition: color 0.2s;
+        line-height: 1;
+      }
+      .close-btn:hover {
+        color: white;
+      }
+
+      @media (max-width: 500px) {
+        body {
+          padding: 20px 35px;
+        }
+        #track-card {
+          padding: 15px;
+        }
+        #track-info {
+          height: 225px;
+        }
+        h2#track-title {
+          font-size: 22px;
+        }
+        p.artist {
+          font-size: 14px;
+          margin-bottom: 8px;
+        }
+        p.meta {
+          font-size: 12px;
+          padding-bottom: 10px;
+        }
+        .popularity-text {
+          font-size: 13px;
+        }
+        a.spotify-btn {
+          font-size: 13px;
+          padding: 10px;
+        }
+        a.apple-btn {
+          font-size: 12px;
+          padding: 6px;
+        }
+        button.action-btn {
+          font-size: 14px;
+          padding: 12px;
+          margin-top: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="bg-aura"></div>
+    <h1>O K I N I<span id="header-username"></span></h1>
+    <div id="track-card">
+      <img
+        id="album-img"
+        src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+        alt=""
+      />
+      <div id="indicator-space">
+        <div id="audio-indicator" onclick="toggleMute()">🔊 試聴中</div>
+      </div>
+      <div id="track-info">
+        <div class="info-text-group">
+          <div class="title-wrapper">
+            <div class="title-left">
+              <h2 id="track-title">読み込み中...</h2>
+              <span id="explicit-badge" class="explicit-badge">E</span>
+            </div>
+          </div>
+          <p id="track-artist" class="artist"></p>
+          <p id="track-meta" class="meta"></p>
+        </div>
+        <div class="links">
+          <a id="spotify-link" class="spotify-btn" href="#" target="_blank"
+            >Spotifyでフル再生</a
+          >
+          <div id="apple-link-container">
+            <a id="apple-link" class="apple-btn" href="#" target="_blank">
+               iTunesで見る
+              <span class="apple-courtesy">provided courtesy of iTunes</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      <button
+        id="random-btn"
+        class="action-btn"
+        disabled
+        onclick="startRoulette()"
+      >
+        システム起動中...
+      </button>
+    </div>
+
+    <div class="footer-links">
+      <a onclick="openModal('about-site-modal')">サイトについて</a>
+      <a onclick="openModal('about-dev-modal')">開発者について</a>
+      <a onclick="openModal('terms-modal')">利用規約</a>
+      <a onclick="openModal('privacy-modal')">プライバシーポリシー</a>
+    </div>
+    <div class="powered-by">Powered by Spotify</div>
+
+    <div
+      id="about-site-modal"
+      class="modal-overlay"
+      onclick="closeModal('about-site-modal')"
+    >
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-btn" onclick="closeModal('about-site-modal')"
+          >×</span
+        >
+        <h3>サイトについて</h3>
+        <p>
+          このサイトは、Spotifyのお気に入りプレイリストに埋もれた楽曲を再発見するための、ランダムディスカバリーツールです。
+        </p>
+      </div>
+    </div>
+    <div
+      id="about-dev-modal"
+      class="modal-overlay"
+      onclick="closeModal('about-dev-modal')"
+    >
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-btn" onclick="closeModal('about-dev-modal')">×</span>
+        <h3>開発者について</h3>
+        <p><strong>かめ</strong></p>
+        <p>Instagram @turtle._.olu</p>
+      </div>
+    </div>
+    <div
+      id="terms-modal"
+      class="modal-overlay"
+      onclick="closeModal('terms-modal')"
+    >
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-btn" onclick="closeModal('terms-modal')">×</span>
+        <h3>利用規約</h3>
+        <p>
+          当アプリは個人開発の非公式ツールであり、Spotify等の公式サービスではありません。
+        </p>
+        <p>
+          本サービスの利用により生じた損害について、開発者は一切の責任を負いかねますのでご了承ください。
+        </p>
+        <p>
+          提供されるデータや機能は、予告なく変更または停止される場合があります。
+        </p>
+      </div>
+    </div>
+    <div
+      id="privacy-modal"
+      class="modal-overlay"
+      onclick="closeModal('privacy-modal')"
+    >
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-btn" onclick="closeModal('privacy-modal')">×</span>
+        <h3>プライバシーポリシー</h3>
+        <p>
+          当アプリは、連携したSpotifyアカウントの公開プロファイル情報および「お気に入り楽曲」の情報を、本アプリの機能提供の目的にのみ使用・保存します。
+        </p>
+        <p>取得したデータを第三者へ販売、提供することは決してありません。</p>
+        <p>
+          データツールより「連携解除とデータ削除」を行うことで、保存された情報は全てデータベースから即座に、かつ完全に削除されます。
+        </p>
+      </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyC43P4omQQCMfGkz0AnbdcD1QZQv3oVaqI",
+        authDomain: "okini-90ed1.firebaseapp.com",
+        projectId: "okini-90ed1",
+        storageBucket: "okini-90ed1.firebasestorage.app",
+        messagingSenderId: "101667008850",
+        appId: "1:101667008850:web:9729014f432d132bd4ca8b",
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      let globalTrackList = [];
+      let previousTrackId = null;
+      let isSpinning = false;
+      let audioCtx = null;
+      let masterGain = null;
+      let currentAudio = null;
+      let currentGain = null;
+      let isMuted = false;
+
+      function initAudio() {
+        if (!audioCtx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AudioContext();
+          masterGain = audioCtx.createGain();
+          masterGain.gain.value = isMuted ? 0 : 0.5;
+          masterGain.connect(audioCtx.destination);
+        }
+        if (audioCtx.state === "suspended") audioCtx.resume();
+      }
+
+      function toggleMute() {
+        isMuted = !isMuted;
+        const indicator = document.getElementById("audio-indicator");
+        if (isMuted) {
+          indicator.innerText = "🔇 ミュート";
+          indicator.classList.remove("pulse-fade");
+          indicator.style.background = "rgba(0, 0, 0, 0.5)";
+          indicator.style.borderColor = "#555";
+          indicator.style.color = "#888";
+          if (masterGain) masterGain.gain.value = 0;
+        } else {
+          indicator.innerText = "🔊 試聴中";
+          indicator.classList.add("pulse-fade");
+          indicator.style.background = "rgba(29, 185, 84, 0.2)";
+          indicator.style.borderColor = "#1db954";
+          indicator.style.color = "#1db954";
+          if (masterGain) masterGain.gain.value = 0.5;
+        }
+      }
+
+      window.onload = async () => {
+        const btn = document.getElementById("random-btn");
+        try {
+          btn.innerText = "ユーザー情報を検索中...";
+          const urlParams = new URLSearchParams(window.location.search);
+          const requestedOkiniId = urlParams.get("user") || "kame";
+
+          const userSnapshot = await db
+            .collection("users")
+            .where("okiniId", "==", requestedOkiniId)
+            .limit(1)
+            .get();
+          if (userSnapshot.empty) {
+            document.getElementById("track-title").innerText =
+              "ユーザーが見つかりません";
+            document.getElementById("track-artist").innerText =
+              "データツールで同期してね！";
+            document.getElementById("track-info").classList.add("show");
+            btn.innerText = "エラーが発生しました";
+            return;
+          }
+
+          const userData = userSnapshot.docs[0].data();
+          const spotifyUserId = userSnapshot.docs[0].id;
+          document.getElementById("header-username").innerText =
+            userData.displayName || requestedOkiniId;
+
+          const chunkCount = userData.chunkCount || 0;
+          if (chunkCount === 0) {
+            document.getElementById("track-title").innerText =
+              "曲データが空です";
+            document.getElementById("track-info").classList.add("show");
+            btn.innerText = "データ同期が必要です";
+            return;
+          }
+
+          btn.innerText = "初期データを読み込み中...";
+          const firstChunkDoc = await db
+            .collection("users")
+            .doc(spotifyUserId)
+            .collection("chunks")
+            .doc(`chunk_0`)
+            .get();
+          if (firstChunkDoc.exists && firstChunkDoc.data().tracks) {
+            globalTrackList = firstChunkDoc.data().tracks;
+          }
+
+          if (globalTrackList.length > 0) {
+            startRoulette();
+          } else {
+            btn.innerText = "データ同期が必要です";
+          }
+
+          if (chunkCount > 1) {
+            const backgroundPromises = [];
+            for (let i = 1; i < chunkCount; i++) {
+              backgroundPromises.push(
+                db
+                  .collection("users")
+                  .doc(spotifyUserId)
+                  .collection("chunks")
+                  .doc(`chunk_${i}`)
+                  .get(),
+              );
+            }
+            Promise.all(backgroundPromises)
+              .then((chunkDocs) => {
+                chunkDocs.forEach((doc) => {
+                  if (doc.exists && doc.data().tracks) {
+                    globalTrackList = globalTrackList.concat(doc.data().tracks);
+                  }
+                });
+              })
+              .catch((e) =>
+                console.error("バックグラウンド読み込みエラー:", e),
+              );
+          }
+        } catch (error) {
+          console.error("データの読み込みに失敗:", error);
+          document.getElementById("track-title").innerText = "通信エラー発生";
+          document.getElementById("track-info").classList.add("show");
+          btn.innerText = "通信エラー";
+        }
+      };
+
+      async function startRoulette() {
+        if (globalTrackList.length === 0 || isSpinning) return;
+        isSpinning = true;
+        initAudio();
+
+        const btn = document.getElementById("random-btn");
+        const img = document.getElementById("album-img");
+        const infoDiv = document.getElementById("track-info");
+        const trackCard = document.getElementById("track-card");
+
+        // --- ルーレット開始時にiTunesリンクを隠す ---
+        const appleContainer = document.getElementById("apple-link-container");
+        appleContainer.classList.remove("show");
+
+        btn.disabled = true;
+
+        let isPreloaded = false;
+        const loadingTimer = setTimeout(() => {
+          if (!isPreloaded) {
+            btn.innerText = "アー写を読み込み中...";
+          }
+        }, 500);
+
+        infoDiv.classList.remove("show");
+        trackCard.classList.remove("ur-card");
+
+        const maxSpins = 20;
+        const spinSequence = [];
+        let tempPrevId = previousTrackId;
+        for (let i = 0; i < maxSpins; i++) {
+          let randomTrack;
+          if (globalTrackList.length > 1) {
+            do {
+              randomTrack =
+                globalTrackList[
+                  Math.floor(Math.random() * globalTrackList.length)
+                ];
+            } while (randomTrack.id === tempPrevId);
+          } else {
+            randomTrack = globalTrackList[0];
+          }
+          tempPrevId = randomTrack.id;
+          spinSequence.push(randomTrack);
+        }
+        const finalTrack = spinSequence[maxSpins - 1];
+        previousTrackId = finalTrack.id;
+
+        const preloadPromises = spinSequence.map((track) => {
+          return new Promise((resolve) => {
+            const tempImg = new Image();
+            tempImg.onload = resolve;
+            tempImg.onerror = resolve;
+            tempImg.src = track.image;
+          });
+        });
+        await Promise.all(preloadPromises);
+
+        isPreloaded = true;
+        clearTimeout(loadingTimer);
+
+        btn.innerText = "選曲中...";
+        img.classList.add("spinning");
+        let spinCount = 0;
+        let delay = 40;
+
+        function spin() {
+          const currentTrack = spinSequence[spinCount];
+          img.src = currentTrack.image;
+          spinCount++;
+          if (spinCount === maxSpins - 1) {
+            playPreviewAudioWithCrossfade(finalTrack.title, finalTrack.artist);
+          }
+          if (spinCount < maxSpins) {
+            delay = delay * 1.15;
+            setTimeout(spin, delay);
+          } else {
+            finishSpin(finalTrack);
+          }
+        }
+        spin();
+      }
+
+      function finishSpin(finalTrack) {
+        const btn = document.getElementById("random-btn");
+        const img = document.getElementById("album-img");
+        const infoDiv = document.getElementById("track-info");
+        const bgAura = document.getElementById("bg-aura");
+        const trackCard = document.getElementById("track-card");
+
+        img.src = finalTrack.image;
+        bgAura.style.backgroundImage = `url('${finalTrack.image}')`;
+        document.getElementById("track-title").innerText = finalTrack.title;
+
+        const firstArtist = finalTrack.artist.split(",")[0];
+        const artistSearchUrl = `https://open.spotify.com/search/${encodeURIComponent(firstArtist)}/artists`;
+        document.getElementById("track-artist").innerHTML =
+          `<a href="${artistSearchUrl}" target="_blank">${finalTrack.artist}</a>`;
+
+        document.getElementById("explicit-badge").style.display =
+          finalTrack.explicit ? "inline-block" : "none";
+
+        const dateObj = new Date(finalTrack.addedAt);
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const formattedDate = `${year}.${month}`;
+        let rarity = 10 - Math.floor(finalTrack.popularity / 10);
+        if (rarity < 1) rarity = 1;
+        if (rarity > 10) rarity = 10;
+        let rarityHtml = `<span class="popularity-text ${rarity >= 9 ? "ur-text" : ""}">${rarity} / 10</span>`;
+        if (rarity >= 9) {
+          trackCard.classList.add("ur-card");
+        }
+        document.getElementById("track-meta").innerHTML =
+          `マイナー度: ${rarityHtml}  |  追加日: ${formattedDate}`;
+        document.getElementById("spotify-link").href = finalTrack.spotifyUrl;
+
+        setTimeout(() => {
+          img.classList.remove("spinning");
+        }, 800);
+        setTimeout(() => {
+          infoDiv.classList.add("show");
+          btn.disabled = false;
+          btn.innerText = "他の曲を引く！";
+          isSpinning = false;
+        }, 1200);
+      }
+
+      async function playPreviewAudioWithCrossfade(title, artist) {
+        try {
+          const firstArtist = artist.split(",")[0];
+          const searchQuery = encodeURIComponent(`${title} ${firstArtist}`);
+          const response = await fetch(
+            `https://itunes.apple.com/search?term=${searchQuery}&country=JP&entity=song&limit=1`,
+          );
+          const data = await response.json();
+          const indicator = document.getElementById("audio-indicator");
+          const appleContainer = document.getElementById(
+            "apple-link-container",
+          );
+          const appleLink = document.getElementById("apple-link");
+
+          if (
+            data.results &&
+            data.results.length > 0 &&
+            data.results[0].previewUrl
+          ) {
+            // --- 追加：iTunesのURLをセットしてボタンを表示 ---
+            const trackViewUrl = data.results[0].trackViewUrl;
+            appleLink.href = trackViewUrl;
+            appleContainer.classList.add("show");
+            // ---------------------------------------------
+
+            const previewUrl = data.results[0].previewUrl;
+            const nextAudio = new Audio(previewUrl);
+            nextAudio.crossOrigin = "anonymous";
+            nextAudio.loop = true;
+            const source = audioCtx.createMediaElementSource(nextAudio);
+            const nextGain = audioCtx.createGain();
+            nextGain.gain.value = 0;
+            source.connect(nextGain);
+            nextGain.connect(masterGain);
+            nextAudio
+              .play()
+              .then(() => {
+                indicator.classList.add("show-indicator");
+                if (!isMuted) indicator.classList.add("pulse-fade");
+                const fadeDuration = 3000;
+                const fadeInterval = 40;
+                const totalSteps = fadeDuration / fadeInterval;
+                let currentStep = 0;
+                const fadeTimer = setInterval(() => {
+                  currentStep++;
+                  const progress = currentStep / totalSteps;
+                  if (currentGain)
+                    currentGain.gain.value = Math.max(0, 1 - progress);
+                  if (nextGain) nextGain.gain.value = Math.min(1, progress);
+                  if (currentStep >= totalSteps) {
+                    clearInterval(fadeTimer);
+                    if (currentAudio) {
+                      currentAudio.pause();
+                      currentAudio.removeAttribute("src");
+                    }
+                    currentAudio = nextAudio;
+                    currentGain = nextGain;
+                  }
+                }, fadeInterval);
+              })
+              .catch((e) => console.log("自動再生ブロック:", e));
+          } else {
+            indicator.classList.remove("show-indicator");
+            indicator.classList.remove("pulse-fade");
+            if (currentGain) {
+              let fadeOutStep = 0;
+              const fadeOutTotal = 3000 / 50;
+              const fadeOutTimer = setInterval(() => {
+                fadeOutStep++;
+                currentGain.gain.value = Math.max(
+                  0,
+                  1 - fadeOutStep / fadeOutTotal,
+                );
+                if (fadeOutStep >= fadeOutTotal) {
+                  clearInterval(fadeOutTimer);
+                  if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.removeAttribute("src");
+                  }
+                  currentAudio = null;
+                  currentGain = null;
+                }
+              }, 50);
+            }
+          }
+        } catch (error) {
+          console.error("通信エラー:", error);
+        }
+      }
+
+      function openModal(modalId) {
+        document.getElementById(modalId).classList.add("active");
+      }
+      function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove("active");
+      }
+    </script>
+  </body>
+</html>
