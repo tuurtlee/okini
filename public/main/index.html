@@ -156,15 +156,11 @@
         height: 200px;
         display: flex;
         flex-direction: column;
-
-        /* 修正箇所: 非表示時（透明時）にクリック判定を無効化する */
         pointer-events: none;
       }
       #track-info.show {
         opacity: 1;
         transform: translateY(0);
-
-        /* 修正箇所: 表示されたらクリック判定を有効化する */
         pointer-events: auto;
       }
 
@@ -196,7 +192,7 @@
         line-clamp: 2;
         overflow: hidden;
         word-break: break-word;
-        max-height: 68px; /* 1行の時に不必要な高さが確保されないように制限 */
+        max-height: 68px;
       }
       .explicit-badge {
         font-size: 10px;
@@ -274,7 +270,6 @@
         gap: 20px;
       }
 
-      /* 修正箇所: Spotifyボタンを横長に変更 */
       a.spotify-btn {
         display: flex;
         align-items: center;
@@ -282,9 +277,9 @@
         background: #1db954;
         color: white;
         text-decoration: none;
-        width: 90px; /* 横幅を広げる */
+        width: 90px;
         height: 50px;
-        border-radius: 25px; /* 完全な円からカプセル型へ */
+        border-radius: 25px;
         font-size: 26px;
         transition: 0.2s;
       }
@@ -303,7 +298,6 @@
         opacity: 1;
       }
 
-      /* 修正箇所: Appleボタンを横長に変更 */
       a.apple-btn {
         display: flex;
         align-items: center;
@@ -311,9 +305,9 @@
         background: transparent;
         color: #e0e0e0;
         text-decoration: none;
-        width: 90px; /* 横幅を広げる */
+        width: 90px;
         height: 50px;
-        border-radius: 25px; /* 完全な円からカプセル型へ */
+        border-radius: 25px;
         border: 1px solid #555;
         font-size: 26px;
         transition: 0.2s;
@@ -471,8 +465,6 @@
         .popularity-text {
           font-size: 13px;
         }
-
-        /* 修正箇所: スマホでのボタンサイズ調整（横幅） */
         a.spotify-btn,
         a.apple-btn {
           width: 80px;
@@ -480,7 +472,6 @@
           border-radius: 25px;
           font-size: 22px;
         }
-
         button.action-btn {
           font-size: 14px;
           padding: 12px;
@@ -559,6 +550,7 @@
       Provided courtesy of iTunes
     </div>
 
+    <!-- モーダル省略(以前と同じ) -->
     <div
       id="about-site-modal"
       class="modal-overlay"
@@ -597,12 +589,6 @@
         <p>
           当アプリは個人開発の非公式ツールであり、Spotify等の公式サービスではありません。
         </p>
-        <p>
-          本サービスの利用により生じた損害について、開発者は一切の責任を負いかねますのでご了承ください。
-        </p>
-        <p>
-          提供されるデータや機能は、予告なく変更または停止される場合があります。
-        </p>
       </div>
     </div>
     <div
@@ -613,13 +599,7 @@
       <div class="modal-content" onclick="event.stopPropagation()">
         <span class="close-btn" onclick="closeModal('privacy-modal')">×</span>
         <h3>プライバシーポリシー</h3>
-        <p>
-          当アプリは、連携したSpotifyアカウントの公開プロファイル情報および「お気に入り楽曲」の情報を、本アプリの機能提供の目的にのみ使用・保存します。
-        </p>
         <p>取得したデータを第三者へ販売、提供することは決してありません。</p>
-        <p>
-          データツールより「連携解除とデータ削除」を行うことで、保存された情報は全てデータベースから即座に、かつ完全に削除されます。
-        </p>
       </div>
     </div>
 
@@ -681,27 +661,27 @@
       window.onload = async () => {
         const btn = document.getElementById("random-btn");
         try {
-          btn.innerText = "ユーザー情報を検索中...";
+          btn.innerText = "データを検索中...";
           const urlParams = new URLSearchParams(window.location.search);
           const requestedOkiniId = urlParams.get("user") || "kame";
 
-          const userSnapshot = await db
-            .collection("users")
-            .where("okiniId", "==", requestedOkiniId)
-            .limit(1)
+          // 変更箇所: IDから直接ドキュメントを取得するようにシンプル化
+          const userDoc = await db
+            .collection("usr_x9k2v")
+            .doc(requestedOkiniId)
             .get();
-          if (userSnapshot.empty) {
+
+          if (!userDoc.exists) {
             document.getElementById("track-title").innerText =
-              "ユーザーが見つかりません";
+              "プレイリストが見つかりません";
             document.getElementById("track-artist").innerText =
-              "データツールで同期してね！";
+              "正しいURLを確認してね！";
             document.getElementById("track-info").classList.add("show");
             btn.innerText = "エラーが発生しました";
             return;
           }
 
-          const userData = userSnapshot.docs[0].data();
-          const spotifyUserId = userSnapshot.docs[0].id;
+          const userData = userDoc.data();
           document.getElementById("header-username").innerText =
             userData.displayName || requestedOkiniId;
 
@@ -716,9 +696,9 @@
 
           btn.innerText = "初期データを読み込み中...";
           const firstChunkDoc = await db
-            .collection("users")
-            .doc(spotifyUserId)
-            .collection("chunks")
+            .collection("usr_x9k2v")
+            .doc(requestedOkiniId)
+            .collection("chk_p4m8b")
             .doc(`chunk_0`)
             .get();
           if (firstChunkDoc.exists && firstChunkDoc.data().tracks) {
@@ -736,9 +716,9 @@
             for (let i = 1; i < chunkCount; i++) {
               backgroundPromises.push(
                 db
-                  .collection("users")
-                  .doc(spotifyUserId)
-                  .collection("chunks")
+                  .collection("usr_x9k2v")
+                  .doc(requestedOkiniId)
+                  .collection("chk_p4m8b")
                   .doc(`chunk_${i}`)
                   .get(),
               );
@@ -784,7 +764,6 @@
           }
         }, 500);
 
-        // 修正箇所: 全体が完全にフェードアウト(0.9s)してからiTunesボタンをリセットする
         infoDiv.classList.remove("show");
         trackCard.classList.remove("ur-card");
         setTimeout(() => {
@@ -860,8 +839,14 @@
 
         const firstArtist = finalTrack.artist.split(",")[0];
         const artistSearchUrl = `https://open.spotify.com/search/${encodeURIComponent(firstArtist)}/artists`;
-        document.getElementById("track-artist").innerHTML =
-          `<a href="${artistSearchUrl}" target="_blank">${finalTrack.artist}</a>`;
+
+        const trackArtistEl = document.getElementById("track-artist");
+        trackArtistEl.innerHTML = "";
+        const artistLink = document.createElement("a");
+        artistLink.href = artistSearchUrl;
+        artistLink.target = "_blank";
+        artistLink.textContent = finalTrack.artist;
+        trackArtistEl.appendChild(artistLink);
 
         document.getElementById("explicit-badge").style.display =
           finalTrack.explicit ? "inline-block" : "none";
@@ -987,35 +972,25 @@
         document.getElementById(modalId).classList.remove("active");
       }
 
-      // ページから離れた（バックグラウンドになった）ときに音声を自動停止する
       document.addEventListener("visibilitychange", () => {
         const indicator = document.getElementById("audio-indicator");
-
         if (document.hidden) {
           if (currentAudio && !currentAudio.paused) {
             currentAudio.pause();
-            console.log("ユーザーが離脱したため、音声を一時停止しました。");
-
-            // UI上のインジケーターのアニメーションも止める
             indicator.classList.remove("pulse-fade");
             indicator.style.opacity = "0.5";
           }
         } else {
-          // 修正箇所: サイトに戻ってきたときに音声を自動再開する
           if (currentAudio && currentAudio.paused && currentAudio.src) {
             currentAudio
               .play()
               .then(() => {
-                console.log("サイトに戻ったため、音声を再開しました。");
                 if (!isMuted) {
                   indicator.classList.add("pulse-fade");
                   indicator.style.opacity = "1";
                 }
               })
-              .catch((e) => {
-                // ユーザー操作なしでの自動再生がブラウザにブロックされた場合は無視する
-                console.log("自動再開がブラウザにブロックされました:", e);
-              });
+              .catch((e) => console.log("自動再開ブロック:", e));
           }
         }
       });

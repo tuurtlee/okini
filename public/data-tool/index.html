@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OKINI - DATA SYNC (Admin)</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        background-color: #121212;
+        color: white;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      #bg-aura {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        background-color: #1db954;
+        filter: blur(90px) brightness(0.2);
+        transform: scale(1.2);
+        transition:
+          background-image 1.5s ease-in-out,
+          background-color 1.5s ease;
+        pointer-events: none;
+      }
+      h1 {
+        font-size: 24px;
+        margin-top: 10px;
+        margin-bottom: 5px;
+        text-align: center;
+        letter-spacing: 4px;
+      }
+      .subtitle {
+        font-size: 11px;
+        color: #1db954;
+        letter-spacing: 2px;
+        margin-bottom: 25px;
+        font-weight: bold;
+      }
+      #main-card {
+        background: #282828;
+        padding: 30px 20px;
+        border-radius: 15px;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        display: flex;
+        flex-direction: column;
+      }
+      .hidden-panel {
+        display: none !important;
+      }
+      .text-muted {
+        color: #b3b3b3 !important;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #e0e0e0;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .input-note {
+        font-size: 11px;
+        color: #888;
+        margin-top: 6px;
+        line-height: 1.4;
+      }
+      input[type="text"],
+      select {
+        width: 100%;
+        padding: 14px;
+        font-size: 15px;
+        background: #1f1f1f;
+        color: #fff;
+        border: 1px solid #444;
+        border-radius: 10px;
+        transition: 0.2s;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      input:focus,
+      select:focus {
+        border-color: #1db954;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.2);
+      }
+      select {
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 1em;
+      }
+
+      button.action-btn {
+        background-color: #1db954;
+        color: white;
+        border: none;
+        width: 100%;
+        padding: 16px;
+        font-size: 15px;
+        font-weight: bold;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      button.action-btn:hover:not(:disabled) {
+        background-color: #1ed760;
+        transform: translateY(-2px);
+      }
+      button.action-btn:disabled {
+        background-color: #333;
+        color: #666;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .btn-google {
+        background-color: #fff !important;
+        color: #333 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      .btn-google:hover:not(:disabled) {
+        background-color: #f0f0f0 !important;
+      }
+
+      .btn-outline {
+        background-color: transparent !important;
+        color: #b3b3b3 !important;
+        border: 1px solid #555 !important;
+        margin-top: 10px;
+      }
+      .btn-outline:hover:not(:disabled) {
+        background-color: #333 !important;
+        color: #fff !important;
+      }
+      .btn-danger {
+        background-color: transparent !important;
+        color: #ff5555 !important;
+        border: 1px solid #ff5555 !important;
+        margin-top: 25px;
+      }
+      .btn-danger:hover:not(:disabled) {
+        background-color: #ff5555 !important;
+        color: #fff !important;
+      }
+
+      .progress-container {
+        margin-top: 25px;
+        width: 100%;
+      }
+      .progress-label {
+        font-size: 12px;
+        color: #1db954;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+      progress {
+        width: 100%;
+        height: 10px;
+        border-radius: 5px;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      progress::-webkit-progress-bar {
+        background-color: #222;
+        border-radius: 5px;
+        border: 1px solid #333;
+      }
+      progress::-webkit-progress-value {
+        background-color: #1db954;
+        border-radius: 5px;
+        transition: width 0.3s ease;
+      }
+
+      .url-box {
+        margin-top: 25px;
+        padding: 20px;
+        background: #181818;
+        border: 2px dashed #1db954;
+        border-radius: 12px;
+        text-align: center;
+      }
+      .url-link {
+        color: #1db954;
+        font-size: 15px;
+        font-weight: bold;
+        text-decoration: none;
+        word-break: break-all;
+        display: block;
+        margin-bottom: 15px;
+        padding: 10px;
+        background: #222;
+        border-radius: 8px;
+      }
+      .copy-btn {
+        background-color: #fff !important;
+        color: #121212 !important;
+        padding: 12px !important;
+        font-size: 14px !important;
+      }
+
+      #status-area {
+        margin-top: 15px;
+        padding: 15px;
+        background: #121212;
+        border-radius: 10px;
+        min-height: 80px;
+        max-height: 150px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+        color: #b3b3b3;
+        line-height: 1.5;
+        border: 1px solid #333;
+      }
+      .log-error {
+        color: #ff5555;
+      }
+      .log-success {
+        color: #1db954;
+        font-weight: bold;
+      }
+      .log-info {
+        color: #4facfe;
+      }
+
+      .admin-badge {
+        background: #ff4757;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        display: inline-block;
+        margin-bottom: 15px;
+      }
+
+      /* 登録リスト用CSS */
+      .list-item {
+        background: #1f1f1f;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .list-item:last-child {
+        margin-bottom: 0;
+      }
+      .list-id-text {
+        font-weight: bold;
+        font-size: 14px;
+        color: #fff;
+      }
+      .list-name-text {
+        font-size: 11px;
+        color: #888;
+        font-weight: normal;
+        margin-left: 6px;
+      }
+      .list-meta-text {
+        font-size: 11px;
+        color: #b3b3b3;
+        margin-top: 4px;
+      }
+      .list-edit-btn {
+        background: #333;
+        border: 1px solid #555;
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+        transition: 0.2s;
+      }
+      .list-edit-btn:hover {
+        background: #1db954;
+        border-color: #1db954;
+        color: #fff;
+      }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  </head>
+  <body>
+    <div id="bg-aura"></div>
+    <h1>O K I N I</h1>
+    <div class="subtitle">DATA SYNC TOOL</div>
+    <div id="main-card">
+      <!-- 1. Firebase Google 管理者ログイン -->
+      <div id="admin-login-panel">
+        <span class="admin-badge">ADMIN ONLY</span>
+        <p
+          class="input-note"
+          style="text-align: center; margin-bottom: 25px; font-size: 13px"
+        >
+          データベース管理のため、<br />あなたのGoogleアカウントでログインしてください。
+        </p>
+        <button class="action-btn btn-google" onclick="adminGoogleLogin()">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              fill="#4285F4"
+            />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853"
+            />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              fill="#FBBC05"
+            />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335"
+            />
+          </svg>
+          Googleでログイン
+        </button>
+      </div>
+
+      <!-- 2. Spotify 連携パネル -->
+      <div id="spotify-login-panel" class="hidden-panel">
+        <span class="admin-badge" style="background: #1db954"
+          >ADMIN LOGGED IN</span
+        >
+        <p
+          class="input-note"
+          style="color: #e0e0e0; margin-bottom: 20px; font-size: 13px"
+        >
+          データベース接続完了。<br />楽曲データを取得するためにSpotifyと連携してください。
+        </p>
+        <button class="action-btn" onclick="spotifyLogin()">
+          Spotifyで連携スタート
+        </button>
+        <button class="action-btn btn-outline" onclick="adminLogout()">
+          ログアウト
+        </button>
+      </div>
+
+      <!-- 3. 操作パネル -->
+      <div id="operation-panel" class="hidden-panel">
+        <span class="admin-badge" style="background: #1db954"
+          >SYSTEM READY</span
+        >
+
+        <div class="form-group">
+          <label for="user-id">作成・更新する OKINI ID (URLに使用)</label>
+          <input
+            type="text"
+            id="user-id"
+            placeholder="例: kame (アルファベット4〜8文字)"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="display-name">表示名 (タイトル横に表示)</label>
+          <input
+            type="text"
+            id="display-name"
+            placeholder="例: かめ (ひらがな2〜5文字)"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="sync-source">同期する対象</label>
+          <select id="sync-source" onchange="toggleSourceOptions()">
+            <option value="liked" selected>お気に入り曲 (Liked Songs)</option>
+            <option value="playlist">特定のプレイリスト</option>
+          </select>
+        </div>
+
+        <div class="form-group hidden-panel" id="playlist-container">
+          <label for="playlist-select">プレイリストを選択</label>
+          <select id="playlist-select">
+            <option value="">読み込み中...</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="fetch-limit-container">
+          <label for="fetch-limit">同期する件数</label>
+          <select id="fetch-limit">
+            <option value="smart" selected>スマート同期（差分のみ）</option>
+            <option value="all">すべて（全曲再取得）</option>
+            <option value="10">最新の10曲</option>
+            <option value="50">最新の50曲</option>
+          </select>
+        </div>
+
+        <button id="add-btn" class="action-btn" onclick="addTracksToOkini()">
+          同期を実行する
+        </button>
+        <button class="action-btn btn-outline" onclick="adminLogout()">
+          ログアウト
+        </button>
+
+        <hr style="border-color: #444; margin: 30px 0" />
+        <h3 style="font-size: 16px; margin-bottom: 15px; color: #1db954">
+          ⚙ 登録済み OKINI リスト
+        </h3>
+        <div id="okini-list-container" style="margin-bottom: 30px">
+          <div style="font-size: 12px; color: #888; text-align: center">
+            リストを読み込み中...
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label style="color: #ff5555">データの削除</label>
+          <div class="input-note" style="margin-bottom: 8px">
+            現在入力されている「OKINI ID」のデータを完全に削除します。
+          </div>
+          <button
+            class="action-btn btn-danger"
+            style="margin-top: 0"
+            onclick="deleteOkiniData()"
+          >
+            指定したIDを削除
+          </button>
+        </div>
+      </div>
+
+      <div class="progress-container hidden-panel" id="progress-container">
+        <div class="progress-label" id="progress-label">処理中...</div>
+        <progress id="sync-progress" value="0" max="100"></progress>
+      </div>
+
+      <div id="result-url-area" class="hidden-panel url-box">
+        <p class="url-desc">🎉 OKINI URLが生成されました！</p>
+        <a id="share-url" class="url-link" href="#" target="_blank"></a>
+        <button class="action-btn copy-btn" onclick="copyUrl()">
+          URLをコピー
+        </button>
+      </div>
+      <div id="status-area">システム待機中...</div>
+    </div>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyC43P4omQQCMfGkz0AnbdcD1QZQv3oVaqI",
+        authDomain: "okini-90ed1.firebaseapp.com",
+        projectId: "okini-90ed1",
+        storageBucket: "okini-90ed1.firebasestorage.app",
+        messagingSenderId: "101667008850",
+        appId: "1:101667008850:web:9729014f432d132bd4ca8b",
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      const auth = firebase.auth();
+
+      const clientId = "e3cc6e65637847cdbe5ee1244e831b16";
+      const redirectUri = window.location.origin + window.location.pathname;
+      const statusArea = document.getElementById("status-area");
+
+      function log(msg, type = "") {
+        const span = document.createElement("span");
+        span.innerText = `> ${msg}\n`;
+        if (type) span.className = `log-${type}`;
+        statusArea.appendChild(span);
+        statusArea.scrollTop = statusArea.scrollHeight;
+      }
+      function clearLog() {
+        statusArea.innerHTML = "";
+      }
+
+      // 状態監視
+      auth.onAuthStateChanged(async (user) => {
+        const adminPanel = document.getElementById("admin-login-panel");
+        const spotifyPanel = document.getElementById("spotify-login-panel");
+        const opePanel = document.getElementById("operation-panel");
+
+        if (user) {
+          adminPanel.classList.add("hidden-panel");
+
+          // 管理者のUIDをログに出力（初回ルール設定用）
+          log(`Googleログイン成功 (UID: ${user.uid})`, "success");
+          log(
+            `※Firebaseルールの 'YOUR_GOOGLE_UID_HERE' に上記UIDを設定してください。`,
+            "info",
+          );
+
+          // 登録済みリストの読み込み
+          loadRegisteredOkiniList();
+
+          const params = new URLSearchParams(window.location.search);
+          const code = params.get("code");
+          const token = localStorage.getItem("spotify_access_token");
+
+          if (code) {
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname,
+            );
+            log("Spotifyの認証コードを確認中...", "info");
+            const accessToken = await getAccessToken(clientId, code);
+            if (accessToken) {
+              localStorage.setItem("spotify_access_token", accessToken);
+              spotifyPanel.classList.add("hidden-panel");
+              opePanel.classList.remove("hidden-panel");
+              log("Spotifyシステム連携完了", "success");
+            }
+          } else if (token) {
+            spotifyPanel.classList.add("hidden-panel");
+            opePanel.classList.remove("hidden-panel");
+            log("Spotifyシステム連携完了", "success");
+          } else {
+            spotifyPanel.classList.remove("hidden-panel");
+            opePanel.classList.add("hidden-panel");
+          }
+        } else {
+          adminPanel.classList.remove("hidden-panel");
+          spotifyPanel.classList.add("hidden-panel");
+          opePanel.classList.add("hidden-panel");
+        }
+      });
+
+      async function adminGoogleLogin() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        try {
+          clearLog();
+          log("Googleで認証中...", "info");
+          await auth.signInWithPopup(provider);
+        } catch (e) {
+          log("ログイン失敗: " + e.message, "error");
+        }
+      }
+
+      function adminLogout() {
+        auth.signOut();
+        localStorage.removeItem("spotify_access_token");
+        window.location.href =
+          window.location.origin + window.location.pathname;
+      }
+
+      // 登録済みリストの取得と表示
+      async function loadRegisteredOkiniList() {
+        const container = document.getElementById("okini-list-container");
+        try {
+          // Firestoreルールで list が許可されていないとここでエラーになります（=UID設定漏れ）
+          const snapshot = await db.collection("usr_x9k2v").get();
+          if (snapshot.empty) {
+            container.innerHTML =
+              '<div style="font-size: 12px; color: #888; text-align: center;">登録されているデータはありません。</div>';
+            return;
+          }
+
+          let html = "";
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            const date = data.updatedAt
+              ? data.updatedAt.toDate().toLocaleDateString()
+              : "不明";
+            html += `
+              <div class="list-item">
+                <div>
+                  <div class="list-id-text">${doc.id} <span class="list-name-text">(${data.displayName || "未設定"})</span></div>
+                  <div class="list-meta-text">曲数: ${data.totalTracks || 0} / 最終更新: ${date}</div>
+                </div>
+                <button class="list-edit-btn" onclick="selectOkiniForEdit('${doc.id}', '${data.displayName || ""}')">編集</button>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+        } catch (e) {
+          container.innerHTML =
+            '<div style="font-size: 12px; color: #ff5555; line-height: 1.5;">リストの取得に失敗しました。<br>※初回ログイン時は、ログに表示されたUIDをFirestoreルールに設定し、ページをリロードしてください。</div>';
+          console.error("リスト取得エラー:", e);
+        }
+      }
+
+      function selectOkiniForEdit(id, name) {
+        document.getElementById("user-id").value = id;
+        document.getElementById("display-name").value = name;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        log(`ID [${id}] を編集モードでセットしました。`, "info");
+      }
+
+      async function toggleSourceOptions() {
+        const source = document.getElementById("sync-source").value;
+        const playlistContainer = document.getElementById("playlist-container");
+        const fetchLimitContainer = document.getElementById(
+          "fetch-limit-container",
+        );
+
+        if (source === "playlist") {
+          playlistContainer.classList.remove("hidden-panel");
+          fetchLimitContainer.classList.add("hidden-panel");
+          await loadPlaylists();
+        } else {
+          playlistContainer.classList.add("hidden-panel");
+          fetchLimitContainer.classList.remove("hidden-panel");
+        }
+      }
+
+      async function loadPlaylists() {
+        const select = document.getElementById("playlist-select");
+        if (select.options.length > 1) return;
+        const token = localStorage.getItem("spotify_access_token");
+        if (!token) return;
+
+        select.innerHTML = '<option value="">プレイリストを取得中...</option>';
+        try {
+          let playlists = [];
+          let nextUrl = "https://api.spotify.com/v1/me/playlists?limit=50";
+          while (nextUrl) {
+            const res = await fetch(nextUrl, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.status === 401) return handleTokenExpired();
+            const data = await res.json();
+            playlists = playlists.concat(data.items);
+            nextUrl = data.next;
+          }
+          select.innerHTML = "";
+          playlists.forEach((pl) => {
+            if (!pl) return;
+            const option = document.createElement("option");
+            option.value = pl.id;
+            option.innerText = pl.name + ` (${pl.tracks.total}曲)`;
+            select.appendChild(option);
+          });
+        } catch (e) {
+          select.innerHTML = '<option value="">エラー発生</option>';
+        }
+      }
+
+      async function spotifyLogin() {
+        const verifier = generateCodeVerifier(128);
+        const challenge = await generateCodeChallenge(verifier);
+        localStorage.setItem("code_verifier", verifier);
+        const params = new URLSearchParams({
+          client_id: clientId,
+          response_type: "code",
+          redirect_uri: redirectUri,
+          scope: "user-library-read playlist-read-private",
+          code_challenge_method: "S256",
+          code_challenge: challenge,
+        });
+        document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
+      }
+      function generateCodeVerifier(length) {
+        let text = "";
+        let possible =
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+        for (let i = 0; i < length; i++)
+          text += possible.charAt(Math.floor(Math.random() * possible.length));
+        return text;
+      }
+      async function generateCodeChallenge(codeVerifier) {
+        const data = new TextEncoder().encode(codeVerifier);
+        const digest = await window.crypto.subtle.digest("SHA-256", data);
+        return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
+      }
+      async function getAccessToken(clientId, code) {
+        const params = new URLSearchParams({
+          client_id: clientId,
+          grant_type: "authorization_code",
+          code: code,
+          redirect_uri: redirectUri,
+          code_verifier: localStorage.getItem("code_verifier"),
+        });
+        const res = await fetch("https://accounts.spotify.com/api/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params,
+        });
+        const json = res.ok ? await res.json() : null;
+        return json ? json.access_token : null;
+      }
+
+      async function addTracksToOkini() {
+        const token = localStorage.getItem("spotify_access_token");
+        const okiniId = document.getElementById("user-id").value.trim();
+        const customDisplayName = document
+          .getElementById("display-name")
+          .value.trim();
+        const syncSource = document.getElementById("sync-source").value;
+        const playlistId = document.getElementById("playlist-select").value;
+        const limitSelection = document.getElementById("fetch-limit").value;
+        const addBtn = document.getElementById("add-btn");
+
+        const progressContainer = document.getElementById("progress-container");
+        const progressBar = document.getElementById("sync-progress");
+        const progressLabel = document.getElementById("progress-label");
+        const resultArea = document.getElementById("result-url-area");
+
+        if (!token) return alert("Spotifyと再連携してください。");
+        if (!/^[a-zA-Z0-9_-]{3,12}$/.test(okiniId))
+          return alert(
+            "OKINI IDは英数字とハイフン・アンダーバーで3〜12文字です。",
+          );
+
+        addBtn.disabled = true;
+        clearLog();
+        resultArea.classList.add("hidden-panel");
+        progressContainer.classList.remove("hidden-panel");
+
+        try {
+          let existingTracks = [];
+          let lastSyncDate = null;
+
+          if (syncSource === "liked" && limitSelection === "smart") {
+            progressLabel.innerText = "既存データの確認中...";
+            progressBar.removeAttribute("value");
+
+            const userDoc = await db.collection("usr_x9k2v").doc(okiniId).get();
+            if (userDoc.exists) {
+              log(
+                `既存のID [${okiniId}] を検知。上書き（差分）更新します。`,
+                "info",
+              );
+              const chunkCount = userDoc.data().chunkCount || 0;
+              if (chunkCount > 0) {
+                const chunkPromises = [];
+                for (let i = 0; i < chunkCount; i++) {
+                  chunkPromises.push(
+                    db
+                      .collection("usr_x9k2v")
+                      .doc(okiniId)
+                      .collection("chk_p4m8b")
+                      .doc(`chunk_${i}`)
+                      .get(),
+                  );
+                }
+                const chunkDocs = await Promise.all(chunkPromises);
+                chunkDocs.forEach((doc) => {
+                  if (doc.exists && doc.data().tracks)
+                    existingTracks = existingTracks.concat(doc.data().tracks);
+                });
+                if (existingTracks.length > 0) {
+                  existingTracks.sort(
+                    (a, b) => new Date(b.addedAt) - new Date(a.addedAt),
+                  );
+                  lastSyncDate = new Date(existingTracks[0].addedAt);
+                }
+              }
+            } else {
+              log(`新規ID [${okiniId}] を作成します。`, "info");
+            }
+          }
+
+          progressLabel.innerText = "Spotifyからデータを取得中...";
+          let allTracks = [];
+          let nextUrl =
+            syncSource === "playlist"
+              ? `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=50`
+              : `https://api.spotify.com/v1/me/tracks?limit=${limitSelection === "all" || limitSelection === "smart" ? 50 : parseInt(limitSelection)}`;
+
+          let shouldStopFetching = false;
+          while (nextUrl && !shouldStopFetching) {
+            const response = await fetch(nextUrl, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (response.status === 429) {
+              const retryAfter = response.headers.get("Retry-After") || 5;
+              log(`制限到達。${retryAfter}秒待機...`, "error");
+              await new Promise((r) => setTimeout(r, retryAfter * 1000));
+              continue;
+            }
+            if (response.status === 401) return handleTokenExpired();
+            const data = await response.json();
+
+            if (
+              syncSource === "liked" &&
+              limitSelection === "smart" &&
+              lastSyncDate
+            ) {
+              for (const item of data.items) {
+                if (!item || !item.track) continue;
+                if (new Date(item.added_at) <= lastSyncDate) {
+                  shouldStopFetching = true;
+                  break;
+                }
+                allTracks.push(item);
+              }
+            } else {
+              allTracks = allTracks.concat(data.items);
+            }
+            if (
+              syncSource === "liked" &&
+              limitSelection !== "all" &&
+              limitSelection !== "smart"
+            )
+              break;
+            if (shouldStopFetching) break;
+            nextUrl = data.next;
+          }
+
+          log(`Spotifyから ${allTracks.length} 曲を取得。`);
+          const formattedNewTracks = allTracks
+            .filter((item) => item && item.track && item.track.id)
+            .map((item) => ({
+              id: item.track.id,
+              title: item.track.name,
+              artist: item.track.artists.map((a) => a.name).join(", "),
+              image:
+                item.track.album && item.track.album.images.length > 0
+                  ? item.track.album.images[0].url
+                  : "",
+              spotifyUrl: item.track.external_urls.spotify,
+              addedAt: item.added_at,
+              popularity: item.track.popularity,
+              explicit: item.track.explicit,
+            }));
+
+          let formattedTracks = formattedNewTracks;
+          if (
+            syncSource === "liked" &&
+            limitSelection === "smart" &&
+            existingTracks.length > 0
+          ) {
+            const combinedMap = new Map();
+            existingTracks.forEach((t) => combinedMap.set(t.id, t));
+            formattedNewTracks.forEach((t) => combinedMap.set(t.id, t));
+            formattedTracks = Array.from(combinedMap.values());
+            formattedTracks.sort(
+              (a, b) => new Date(b.addedAt) - new Date(a.addedAt),
+            );
+          }
+
+          const CHUNK_SIZE = 500;
+          const chunks = [];
+          for (let i = 0; i < formattedTracks.length; i += CHUNK_SIZE)
+            chunks.push(formattedTracks.slice(i, i + CHUNK_SIZE));
+
+          progressBar.max = chunks.length;
+          progressBar.value = 0;
+          progressLabel.innerText = `データベースに保存中... (0/${chunks.length})`;
+
+          for (let i = 0; i < chunks.length; i++) {
+            await db
+              .collection("usr_x9k2v")
+              .doc(okiniId)
+              .collection("chk_p4m8b")
+              .doc(`chunk_${i}`)
+              .set({ tracks: chunks[i] });
+            progressBar.value = i + 1;
+            progressLabel.innerText = `データベースに保存中... (${i + 1}/${chunks.length})`;
+          }
+
+          progressLabel.innerText = "設定を更新中...";
+          await db.collection("usr_x9k2v").doc(okiniId).set(
+            {
+              displayName: customDisplayName,
+              chunkCount: chunks.length,
+              totalTracks: formattedTracks.length,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true },
+          );
+
+          progressLabel.innerText = "🎉 同期完了！";
+          log("すべての処理が完了しました。", "success");
+
+          const shareUrl = `${window.location.origin}/main/?user=${okiniId}`;
+          const shareLink = document.getElementById("share-url");
+          shareLink.href = shareUrl;
+          shareLink.innerText = shareUrl;
+          resultArea.classList.remove("hidden-panel");
+
+          // リストを最新化する
+          loadRegisteredOkiniList();
+        } catch (e) {
+          console.error(e);
+          log("権限エラー、またはその他のエラーが発生しました。", "error");
+        } finally {
+          addBtn.disabled = false;
+        }
+      }
+
+      async function deleteOkiniData() {
+        const okiniId = document.getElementById("user-id").value.trim();
+        if (!okiniId) return alert("削除したいOKINI IDを入力してください。");
+        if (
+          !confirm(
+            `【警告】ID [${okiniId}] の全データを削除します。よろしいですか？`,
+          )
+        )
+          return;
+
+        clearLog();
+        log(`ID [${okiniId}] のデータを削除しています...`, "info");
+        try {
+          const chunksSnapshot = await db
+            .collection("usr_x9k2v")
+            .doc(okiniId)
+            .collection("chk_p4m8b")
+            .get();
+          const deletePromises = [];
+          chunksSnapshot.forEach((doc) =>
+            deletePromises.push(doc.ref.delete()),
+          );
+          await Promise.all(deletePromises);
+          await db.collection("usr_x9k2v").doc(okiniId).delete();
+          log("削除が完了しました！", "success");
+          alert("削除完了しました。");
+
+          // 入力欄をクリアしてリストを最新化
+          document.getElementById("user-id").value = "";
+          document.getElementById("display-name").value = "";
+          loadRegisteredOkiniList();
+        } catch (e) {
+          log("削除エラー: " + e.message, "error");
+        }
+      }
+
+      function handleTokenExpired() {
+        alert("Spotify連携の有効期限が切れました。再ログインしてください。");
+        localStorage.removeItem("spotify_access_token");
+        window.location.reload();
+      }
+      function copyUrl() {
+        navigator.clipboard
+          .writeText(document.getElementById("share-url").href)
+          .then(() => alert("コピーしました！"));
+      }
+    </script>
+  </body>
+</html>
