@@ -581,7 +581,8 @@
         const params = new URLSearchParams(window.location.search);
         const code = params.get("code");
         if (code) {
-          window.history.pushState(
+          // 修正点1: 戻るボタン等で古いコードが再実行されないように replaceState を使用
+          window.history.replaceState(
             {},
             document.title,
             window.location.pathname,
@@ -743,19 +744,64 @@
         clearLog();
 
         try {
+          // 修正点2: OKINI IDの重複チェック
+          log("OKINI IDの重複をチェック中...", "info");
+          const okiniIdCheck = await db
+            .collection("users")
+            .where("okiniId", "==", okiniId)
+            .get();
+          let isDuplicate = false;
+          okiniIdCheck.forEach((doc) => {
+            // 既に登録されているIDが、自分以外のユーザーのものであれば重複とみなす
+            if (doc.id !== currentSpotifyId) {
+              isDuplicate = true;
+            }
+          });
+
+          if (isDuplicate) {
+            alert(
+              `【エラー】ID「${okiniId}」は既に他のユーザーに使用されています。別のIDを指定してください。`,
+            );
+            addBtn.disabled = false;
+            addBtn.innerText = "同期を開始する";
+            return;
+          }
+
           log("[1/4] Spotifyから曲リストを取得中...", "info");
           let allTracks = [];
           let fetchLimit =
             limitSelection === "all" ? 50 : parseInt(limitSelection);
           let nextUrl = `https://api.spotify.com/v1/me/tracks?limit=${fetchLimit}`;
+
           while (nextUrl) {
             const response = await fetch(nextUrl, {
               headers: { Authorization: `Bearer ${token}` },
             });
+
+            // 修正点3: Spotify API レートリミット（429エラー）対応（指数的バックオフ）
+            if (response.status === 429) {
+              // Retry-After ヘッダーから待機秒数を取得（取得できない場合はデフォルト5秒）
+              const retryAfter = response.headers.get("Retry-After") || 5;
+              const waitMs = parseInt(retryAfter) * 1000;
+              log(
+                `⚠ Spotify APIの制限に到達しました。${retryAfter}秒待機してから再試行します...`,
+                "error",
+              );
+
+              // 指定された秒数だけ処理を一時停止（待機）する
+              await new Promise((resolve) => setTimeout(resolve, waitMs));
+              continue; // 同じ nextUrl でリクエストをやり直す
+            }
+
             if (response.status === 401) {
               handleTokenExpired();
               return;
             }
+
+            if (!response.ok) {
+              throw new Error(`APIリクエスト失敗: ${response.status}`);
+            }
+
             const data = await response.json();
             allTracks = allTracks.concat(data.items);
             log(`...現在 ${allTracks.length} 曲取得`);
@@ -832,7 +878,6 @@
         }
       }
 
-      // --- 追加：データの一括削除と連携解除 ---
       async function deleteUserData() {
         if (!currentSpotifyId) return;
 
@@ -850,7 +895,6 @@
         log("データベースからあなたの情報を削除しています...", "info");
 
         try {
-          // 1. chunksサブコレクションの中身をすべて消す
           const chunksSnapshot = await db
             .collection("users")
             .doc(currentSpotifyId)
@@ -865,7 +909,6 @@
             `... ${deletePromises.length}個の曲データチャンクを消去しました。`,
           );
 
-          // 2. ユーザー自身のドキュメントを消す
           await db.collection("users").doc(currentSpotifyId).delete();
           log("... ユーザープロフィールの削除が完了しました。");
 

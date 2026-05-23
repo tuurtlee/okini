@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OKINI</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <style>
       * {
         box-sizing: border-box;
@@ -36,6 +40,7 @@
         transition: background-image 2s ease-in-out;
         pointer-events: none;
       }
+
       h1 {
         font-size: 24px;
         margin-top: 10px;
@@ -56,6 +61,7 @@
         text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
         opacity: 0.9;
       }
+
       #track-card {
         background: #282828;
         padding: 20px;
@@ -95,6 +101,7 @@
         opacity: 0.7;
         filter: blur(3px);
       }
+
       #indicator-space {
         height: 26px;
         display: flex;
@@ -146,14 +153,19 @@
         transition:
           opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1),
           transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
-        /* 高さを少し広げてボタンを2つ置けるように調整 */
-        height: 235px;
+        height: 200px;
         display: flex;
         flex-direction: column;
+
+        /* 修正箇所: 非表示時（透明時）にクリック判定を無効化する */
+        pointer-events: none;
       }
       #track-info.show {
         opacity: 1;
         transform: translateY(0);
+
+        /* 修正箇所: 表示されたらクリック判定を有効化する */
+        pointer-events: auto;
       }
 
       .info-text-group {
@@ -165,7 +177,7 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 8px;
-        margin: 0 0 8px 0;
+        margin: 0 0 4px 0;
       }
       .title-left {
         display: flex;
@@ -184,6 +196,7 @@
         line-clamp: 2;
         overflow: hidden;
         word-break: break-word;
+        max-height: 68px; /* 1行の時に不必要な高さが確保されないように制限 */
       }
       .explicit-badge {
         font-size: 10px;
@@ -197,8 +210,9 @@
       }
       p.artist {
         color: #b3b3b3;
-        margin: 0 0 10px 0;
+        margin: 0 0 8px 0;
         font-size: 15px;
+        line-height: 1.2;
       }
       p.artist a {
         color: inherit;
@@ -217,6 +231,7 @@
         border-bottom: 1px solid #444;
         padding-bottom: 12px;
       }
+
       .popularity-text {
         color: #1db954;
         font-weight: bold;
@@ -250,66 +265,65 @@
       .links {
         margin-top: auto;
         margin-bottom: 12px;
-        text-align: center;
         position: relative;
         z-index: 10;
         display: flex;
-        flex-direction: column;
-        gap: 8px;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
       }
+
+      /* 修正箇所: Spotifyボタンを横長に変更 */
       a.spotify-btn {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         background: #1db954;
         color: white;
         text-decoration: none;
-        padding: 12px;
-        border-radius: 25px;
-        font-size: 14px;
-        font-weight: bold;
+        width: 90px; /* 横幅を広げる */
+        height: 50px;
+        border-radius: 25px; /* 完全な円からカプセル型へ */
+        font-size: 26px;
         transition: 0.2s;
-        text-align: center;
       }
       a.spotify-btn:hover {
         background: #1ed760;
+        transform: scale(1.05);
       }
 
-      /* --- 追加：iTunesリンク用のスタイル --- */
       #apple-link-container {
-        display: none; /* 初期状態は非表示 */
+        display: none;
         opacity: 0;
         transition: opacity 0.5s ease;
       }
       #apple-link-container.show {
-        display: block;
+        display: flex;
         opacity: 1;
       }
+
+      /* 修正箇所: Appleボタンを横長に変更 */
       a.apple-btn {
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
         background: transparent;
         color: #e0e0e0;
         text-decoration: none;
-        padding: 8px;
-        border-radius: 25px;
+        width: 90px; /* 横幅を広げる */
+        height: 50px;
+        border-radius: 25px; /* 完全な円からカプセル型へ */
         border: 1px solid #555;
-        font-size: 13px;
-        font-weight: bold;
+        font-size: 26px;
         transition: 0.2s;
       }
       a.apple-btn:hover {
         background: rgba(255, 255, 255, 0.1);
         border-color: #888;
         color: white;
+        transform: scale(1.05);
       }
-      .apple-courtesy {
-        font-size: 9px;
-        font-weight: normal;
-        color: #888;
-        margin-top: 2px;
-      }
-      /* ---------------------------------- */
 
       button.action-btn {
         background-color: #333;
@@ -363,6 +377,7 @@
         font-size: 11px;
         letter-spacing: 1px;
         text-align: center;
+        line-height: 1.5;
       }
 
       .modal-overlay {
@@ -440,7 +455,7 @@
           padding: 15px;
         }
         #track-info {
-          height: 225px;
+          height: 190px;
         }
         h2#track-title {
           font-size: 22px;
@@ -456,14 +471,16 @@
         .popularity-text {
           font-size: 13px;
         }
-        a.spotify-btn {
-          font-size: 13px;
-          padding: 10px;
-        }
+
+        /* 修正箇所: スマホでのボタンサイズ調整（横幅） */
+        a.spotify-btn,
         a.apple-btn {
-          font-size: 12px;
-          padding: 6px;
+          width: 80px;
+          height: 45px;
+          border-radius: 25px;
+          font-size: 22px;
         }
+
         button.action-btn {
           font-size: 14px;
           padding: 12px;
@@ -495,14 +512,28 @@
           <p id="track-artist" class="artist"></p>
           <p id="track-meta" class="meta"></p>
         </div>
+
         <div class="links">
-          <a id="spotify-link" class="spotify-btn" href="#" target="_blank"
-            >Spotifyでフル再生</a
+          <a
+            id="spotify-link"
+            class="spotify-btn"
+            href="#"
+            target="_blank"
+            aria-label="Spotifyでフル再生"
+            title="Spotifyでフル再生"
           >
+            <i class="fa-brands fa-spotify"></i>
+          </a>
           <div id="apple-link-container">
-            <a id="apple-link" class="apple-btn" href="#" target="_blank">
-               iTunesで見る
-              <span class="apple-courtesy">provided courtesy of iTunes</span>
+            <a
+              id="apple-link"
+              class="apple-btn"
+              href="#"
+              target="_blank"
+              aria-label="iTunesで見る"
+              title="iTunesで見る"
+            >
+              <i class="fa-brands fa-apple"></i>
             </a>
           </div>
         </div>
@@ -523,7 +554,10 @@
       <a onclick="openModal('terms-modal')">利用規約</a>
       <a onclick="openModal('privacy-modal')">プライバシーポリシー</a>
     </div>
-    <div class="powered-by">Powered by Spotify</div>
+    <div class="powered-by">
+      Powered by Spotify<br />
+      Provided courtesy of iTunes
+    </div>
 
     <div
       id="about-site-modal"
@@ -739,9 +773,7 @@
         const infoDiv = document.getElementById("track-info");
         const trackCard = document.getElementById("track-card");
 
-        // --- ルーレット開始時にiTunesリンクを隠す ---
         const appleContainer = document.getElementById("apple-link-container");
-        appleContainer.classList.remove("show");
 
         btn.disabled = true;
 
@@ -752,8 +784,12 @@
           }
         }, 500);
 
+        // 修正箇所: 全体が完全にフェードアウト(0.9s)してからiTunesボタンをリセットする
         infoDiv.classList.remove("show");
         trackCard.classList.remove("ur-card");
+        setTimeout(() => {
+          appleContainer.classList.remove("show");
+        }, 900);
 
         const maxSpins = 20;
         const spinSequence = [];
@@ -875,11 +911,9 @@
             data.results.length > 0 &&
             data.results[0].previewUrl
           ) {
-            // --- 追加：iTunesのURLをセットしてボタンを表示 ---
             const trackViewUrl = data.results[0].trackViewUrl;
             appleLink.href = trackViewUrl;
             appleContainer.classList.add("show");
-            // ---------------------------------------------
 
             const previewUrl = data.results[0].previewUrl;
             const nextAudio = new Audio(previewUrl);
@@ -952,6 +986,39 @@
       function closeModal(modalId) {
         document.getElementById(modalId).classList.remove("active");
       }
+
+      // ページから離れた（バックグラウンドになった）ときに音声を自動停止する
+      document.addEventListener("visibilitychange", () => {
+        const indicator = document.getElementById("audio-indicator");
+
+        if (document.hidden) {
+          if (currentAudio && !currentAudio.paused) {
+            currentAudio.pause();
+            console.log("ユーザーが離脱したため、音声を一時停止しました。");
+
+            // UI上のインジケーターのアニメーションも止める
+            indicator.classList.remove("pulse-fade");
+            indicator.style.opacity = "0.5";
+          }
+        } else {
+          // 修正箇所: サイトに戻ってきたときに音声を自動再開する
+          if (currentAudio && currentAudio.paused && currentAudio.src) {
+            currentAudio
+              .play()
+              .then(() => {
+                console.log("サイトに戻ったため、音声を再開しました。");
+                if (!isMuted) {
+                  indicator.classList.add("pulse-fade");
+                  indicator.style.opacity = "1";
+                }
+              })
+              .catch((e) => {
+                // ユーザー操作なしでの自動再生がブラウザにブロックされた場合は無視する
+                console.log("自動再開がブラウザにブロックされました:", e);
+              });
+          }
+        }
+      });
     </script>
   </body>
 </html>
